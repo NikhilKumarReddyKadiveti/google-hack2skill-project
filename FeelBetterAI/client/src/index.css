@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(222, 84%, 98%);
+  --foreground: hsl(222, 15%, 20%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(222, 15%, 20%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(222, 15%, 20%);
+  --primary: hsl(235, 69%, 70%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(222, 15%, 20%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215, 16%, 47%);
+  --accent: hsl(149, 69%, 53%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --ring: hsl(235, 69%, 70%);
+  --chart-1: hsl(235, 69%, 70%);
+  --chart-2: hsl(149, 69%, 53%);
+  --chart-3: hsl(43, 74%, 66%);
+  --chart-4: hsl(0, 84%, 60%);
+  --chart-5: hsl(215, 16%, 47%);
+  --success: hsl(149, 69%, 53%);
+  --warning: hsl(43, 74%, 66%);
+  --crisis: hsl(0, 84%, 60%);
+  --sidebar: hsl(210, 40%, 96%);
+  --sidebar-foreground: hsl(222, 15%, 20%);
+  --sidebar-primary: hsl(235, 69%, 70%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(149, 69%, 53%);
+  --sidebar-accent-foreground: hsl(0, 0%, 100%);
+  --sidebar-border: hsl(214, 32%, 91%);
+  --sidebar-ring: hsl(235, 69%, 70%);
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 0.75rem;
+  --shadow-2xs: 0px 2px 0px 0px hsl(235, 69%, 70% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(235, 69%, 70% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(235, 69%, 70% / 0.00), 0px 1px 2px -1px hsl(235, 69%, 70% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(235, 69%, 70% / 0.00), 0px 1px 2px -1px hsl(235, 69%, 70% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(235, 69%, 70% / 0.00), 0px 2px 4px -1px hsl(235, 69%, 70% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(235, 69%, 70% / 0.00), 0px 4px 6px -1px hsl(235, 69%, 70% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(235, 69%, 70% / 0.00), 0px 8px 10px -1px hsl(235, 69%, 70% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(235, 69%, 70% / 0.00);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  --background: hsl(222, 15%, 8%);
+  --foreground: hsl(222, 84%, 95%);
+  --card: hsl(222, 15%, 12%);
+  --card-foreground: hsl(222, 84%, 95%);
+  --popover: hsl(222, 15%, 8%);
+  --popover-foreground: hsl(222, 84%, 95%);
+  --primary: hsl(235, 69%, 70%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(222, 15%, 16%);
+  --secondary-foreground: hsl(222, 84%, 95%);
+  --muted: hsl(222, 15%, 16%);
+  --muted-foreground: hsl(215, 16%, 60%);
+  --accent: hsl(149, 69%, 53%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(222, 15%, 20%);
+  --input: hsl(222, 15%, 20%);
+  --ring: hsl(235, 69%, 70%);
+  --success: hsl(149, 69%, 53%);
+  --warning: hsl(43, 74%, 66%);
+  --crisis: hsl(0, 84%, 60%);
+  --sidebar: hsl(222, 15%, 12%);
+  --sidebar-foreground: hsl(222, 84%, 95%);
+  --sidebar-primary: hsl(235, 69%, 70%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(149, 69%, 53%);
+  --sidebar-accent-foreground: hsl(0, 0%, 100%);
+  --sidebar-border: hsl(222, 15%, 20%);
+  --sidebar-ring: hsl(235, 69%, 70%);
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.mood-indicator {
+  transition: all 0.3s ease;
+}
+
+.voice-active {
+  animation: gentle-pulse 1s ease-in-out infinite;
+}
+
+.crisis-mode {
+  background: linear-gradient(135deg, hsl(0, 84%, 95%) 0%, hsl(0, 74%, 92%) 100%);
+}
+
+.animate-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
