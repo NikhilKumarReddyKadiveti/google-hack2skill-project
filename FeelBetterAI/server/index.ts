@@ -1,8 +1,26 @@
+
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import session from 'express-session';
+import pgSession from 'connect-pg-simple';
+import { db } from './db/postgres';
 
 const app = express();
+
+// Session middleware for PostgreSQL
+app.use(session({
+  store: new (pgSession(session))({
+    pool: db,
+    tableName: 'session'
+  }),
+  secret: process.env.SESSION_SECRET || 'feelbetterai_secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false }
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

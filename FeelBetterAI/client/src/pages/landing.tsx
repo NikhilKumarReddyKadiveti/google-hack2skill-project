@@ -5,12 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Shield, Mic, ChartLine, Clock, ShieldQuestion, MessageSquareDashed, ChartPie, AlertTriangle } from "lucide-react";
 
 export default function Landing() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // If user is authenticated, don't show landing page
-  if (!isLoading && isAuthenticated) {
-    return null;
-  }
+  // Always show landing page
 
   const features = [
     {
@@ -105,11 +100,11 @@ export default function Landing() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   size="lg" 
-                  onClick={() => window.location.href = '/api/login'}
+                  onClick={() => window.location.href = '/chat'}
                   className="animate-breathe"
                   data-testid="button-start-journey"
                 >
-                  Start Your Journey
+                  Start Chat
                 </Button>
                 <Button 
                   variant="outline" 

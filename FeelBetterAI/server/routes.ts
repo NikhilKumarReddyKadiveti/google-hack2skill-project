@@ -2,45 +2,40 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+// Removed OIDC/Replit authentication
 import { generateEmphatheticResponse, analyzeSentiment, detectCrisis } from "./services/openai";
 import { analyzeTextForCrisis, getCrisisResponseMessage } from "./services/crisisDetection";
 import { calculateMoodTrend, generateMoodInsights, getDailyMoodSummary } from "./services/moodAnalysis";
-import { insertMessageSchema, insertConversationSchema, insertMoodEntrySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Removed OIDC/Replit authentication middleware
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
+  app.get('/api/auth/user', async (req: any, res) => {
+    // No authentication, return mock user
+    res.json({
+      id: "demo-user",
+      email: "demo@feelbetter.ai",
+      firstName: "Demo",
+      lastName: "User",
+      profileImageUrl: "",
+    });
   });
 
   // Conversation routes
-  app.post('/api/conversations', isAuthenticated, async (req: any, res) => {
+  app.post('/api/conversations', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const conversationData = insertConversationSchema.parse({
+      const userId = "demo-user";
+      const conversationData = {
         ...req.body,
         userId
-      });
-      
+      };
       const conversation = await storage.createConversation(conversationData);
-      
       // Create initial session
       const session = await storage.createUserSession({
         userId,
         messageCount: 0
       });
-      
       res.json({ conversation, sessionId: session.id });
     } catch (error) {
       console.error("Error creating conversation:", error);
@@ -48,9 +43,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/conversations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/conversations', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = "demo-user";
       const conversations = await storage.getUserConversations(userId);
       res.json(conversations);
     } catch (error) {
@@ -59,7 +54,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/conversations/:id/messages', isAuthenticated, async (req: any, res) => {
+  app.get('/api/conversations/:id/messages', async (req: any, res) => {
     try {
       const { id } = req.params;
       const messages = await storage.getConversationMessages(id);
@@ -71,14 +66,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mood tracking routes
-  app.get('/api/mood/entries', isAuthenticated, async (req: any, res) => {
+  app.get('/api/mood/entries', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = "demo-user";
       const { startDate, endDate } = req.query;
-      
       const start = startDate ? new Date(startDate as string) : undefined;
       const end = endDate ? new Date(endDate as string) : undefined;
-      
       const entries = await storage.getUserMoodEntries(userId, start, end);
       res.json(entries);
     } catch (error) {
@@ -87,11 +80,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/mood/average', isAuthenticated, async (req: any, res) => {
+  app.get('/api/mood/average', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = "demo-user";
       const { days = 7 } = req.query;
-      
       const average = await storage.getUserAverageMood(userId, Number(days));
       res.json({ average });
     } catch (error) {
@@ -100,19 +92,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/mood/dashboard', isAuthenticated, async (req: any, res) => {
+  app.get('/api/mood/dashboard', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      
+      const userId = "demo-user";
       // Get last 30 days of mood data
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
       const moodEntries = await storage.getUserMoodEntries(userId, thirtyDaysAgo);
       const sessions = await storage.getUserSessions(userId);
-      
       // Calculate trends and insights
-      const trend = calculateMoodTrend(moodEntries.map(entry => ({ score: entry.score, date: entry.date as Date })));
+      const trend = calculateMoodTrend(
+        moodEntries.map(entry => ({
+          score: entry.score,
+          date: new Date(entry.date),
+        }))
+      );
       const insights = generateMoodInsights(
         moodEntries.map(entry => ({ score: entry.score, date: entry.date as Date })),
         sessions.map(session => ({ 
@@ -192,13 +186,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const userId = conversation.userId;
           
           // Store user message
-          const userMessage = await storage.createMessage(
-            insertMessageSchema.parse({
-              conversationId,
-              role: 'user',
-              content
-            })
-          );
+          const userMessage = await storage.createMessage({
+            conversationId,
+            role: 'user',
+            content
+          });
 
           // Analyze sentiment and crisis indicators
           const sentimentAnalysis = await analyzeSentiment(content);
@@ -212,14 +204,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           // Create mood entry
-          await storage.createMoodEntry(
-            insertMoodEntrySchema.parse({
-              userId: userId,
-              conversationId,
-              score: sentimentAnalysis.rating,
-              confidence: sentimentAnalysis.confidence
-            })
-          );
+          await storage.createMoodEntry({
+            userId: userId,
+            conversationId,
+            score: sentimentAnalysis.rating,
+            confidence: sentimentAnalysis.confidence,
+            date: new Date()
+          });
 
           // Handle crisis if detected
           if (crisisAnalysis.requiresIntervention || aiCrisisDetection.isCrisis) {
@@ -263,13 +254,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
 
           // Store AI message
-          const aiMessage = await storage.createMessage(
-            insertMessageSchema.parse({
-              conversationId,
-              role: 'assistant',
-              content: aiResponse
-            })
-          );
+          const aiMessage = await storage.createMessage({
+            conversationId,
+            role: 'assistant',
+            content: aiResponse
+          });
 
           // Update session message count
           if (sessionId) {

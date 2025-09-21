@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
@@ -31,6 +32,7 @@ interface Conversation {
 }
 
 export default function Chat() {
+  const [, setLocation] = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const { speak, isSpeaking, stop: stopSpeaking } = useTextToSpeech({
@@ -103,45 +105,29 @@ export default function Chat() {
   }, []);
 
   const initializeConversation = async () => {
+    let welcomeMessage: Message = {
+      id: "welcome",
+      role: "assistant",
+      content: "Hi, I'm your Feel-Better AI companion. For the best experience, please put on your headphones. We'll start when you're ready.",
+      timestamp: new Date()
+    };
+    setMessages([welcomeMessage]);
+    speak(welcomeMessage.content);
+
     try {
       const response = await apiRequest("POST", "/api/conversations", {
         mode: "talk",
         title: `Chat Session ${new Date().toLocaleDateString()}`
       });
-
       if (response.ok) {
         const data = await response.json();
         setCurrentConversation(data.conversation);
         setSessionId(data.sessionId);
-
-        // Add welcome message
-        const welcomeMessage: Message = {
-          id: "welcome",
-          role: "assistant",
-          content: "Hi, I'm your Feel-Better AI companion. For the best experience, please put on your headphones. We'll start when you're ready.",
-          timestamp: new Date()
-        };
-        setMessages([welcomeMessage]);
-
-        // Speak welcome message
-        speak(welcomeMessage.content);
       }
     } catch (error) {
-      if (isUnauthorizedError(error as Error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      
       toast({
         title: "Error",
-        description: "Failed to start conversation. Please try again.",
+        description: "Failed to start conversation. You can still talk to me!",
         variant: "destructive",
       });
     }
@@ -215,16 +201,33 @@ export default function Chat() {
 
   const sendMessage = () => {
     const content = inputMessage.trim();
-    if (!content || !currentConversation || !isConnected) return;
+    if (!content) return;
 
-    // Send message via WebSocket
-    sendWSMessage({
-      type: "chat_message",
-      conversationId: currentConversation.id,
-      content,
-      sessionId
-    });
-
+    // Try to send via WebSocket if connected
+    if (isConnected && currentConversation) {
+      sendWSMessage({
+        type: "chat_message",
+        conversationId: currentConversation.id,
+        content,
+        sessionId
+      });
+    } else {
+      // Simulate AI response if backend/WebSocket fails
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content,
+        timestamp: new Date()
+      };
+      const aiMessage: Message = {
+        id: `ai-${Date.now()}`,
+        role: "assistant",
+        content: "I'm here to listen. Tell me more about how you're feeling.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, aiMessage]);
+      speak(aiMessage.content);
+    }
     setInputMessage("");
   };
 
@@ -236,12 +239,22 @@ export default function Chat() {
   };
 
   const toggleVoiceMode = () => {
-    setIsVoiceMode(!isVoiceMode);
-    if (!isVoiceMode) {
+    // Try to activate voice mode, handle errors
+    try {
+      setIsVoiceMode(!isVoiceMode);
+      if (!isVoiceMode) {
+        toast({
+          title: "Voice Mode Activated",
+          description: "Click the microphone to start speaking",
+        });
+      }
+    } catch (err) {
       toast({
-        title: "Voice Mode Activated",
-        description: "Click the microphone to start speaking",
+        title: "Microphone Error",
+        description: "Could not access microphone. Please check permissions and retry.",
+        variant: "destructive",
       });
+      setIsVoiceMode(false);
     }
   };
 
@@ -287,6 +300,15 @@ export default function Chat() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/")}
+                title="Home"
+                data-testid="button-home"
+              >
+                Home
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
